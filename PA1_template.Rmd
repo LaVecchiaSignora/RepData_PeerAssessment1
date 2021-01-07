@@ -7,19 +7,87 @@ output:
 
 
 ## Loading and preprocessing the data
+```{r, echo = TRUE}
+unzip("./activity.zip")
+library(ggplot2)
+Act.data <- read.csv("./activity.csv")
+summary(Act.data)
+head(Act.data)
+names(Act.data)
 
 
+```
 
 ## What is mean total number of steps taken per day?
 
+```{r, echo = TRUE}
+data.day <- aggregate(steps ~ date, Act.data, sum, na.rm=TRUE)
+data.day
+ 
 
+hist(data.day$steps)
+
+mean.day<-mean(data.day$steps)
+mean.day
+
+median.day<-median(data.day$steps)
+median.day
+
+```
 
 ## What is the average daily activity pattern?
+```{r, echo = TRUE}
+data.Interval<-aggregate(steps~interval, Act.data, mean, na.rm=TRUE)
+ 
+plot(steps~interval, data.Interval, type="l")
+ 
+max.data.Interval <- data.Interval[which.max(data.Interval$steps),]$interval
+max.data.Interval
 
+
+```
 
 
 ## Imputing missing values
+```{r, echo = TRUE}
 
+missing.data<-sum(is.na(Act.data$steps))
+missing.data
+##replacing  missing data 
+Act.data$steps2 <- ifelse(is.na(Act.data$steps), round(data.Interval$steps[match(Act.data$interval, data.Interval$interval)],0), Act.data$steps)
+##creating new dataframe(no missing values)
+Act.data2 <- data.frame(steps=Act.data$steps2, interval=Act.data$interval, date=Act.data$date)
+head(Act.data2)
+
+ data.day2 <- aggregate(Act.data2$steps, list(Act.data2$date),sum)
+colnames(data.day2) <- c("Date", "Steps")
+ 
+g <- ggplot(data.day2, aes(Steps))
+g+geom_histogram()+ggtitle("histogram of the total number of steps taken each day")+xlab("Steps")+ylab("Frequency")
+ 
+
+mean(data.day2$Steps)
+median(data.day2$Steps)
+
+```
 
 
 ## Are there differences in activity patterns between weekdays and weekends?
+```{r, echo = TRUE}
+
+
+Act.data2$date2 <- as.Date(Act.data2$date, format = "%Y-%m-%d")
+Act.data2$weekday <- weekdays(Act.data2$date2)
+Act.data2$level <- ifelse(Act.data2$weekday=="Saturday" | Act.data2$weekday=="Sunday", yes="weekend",no="weekday")
+
+head(Act.data2)
+
+
+library(lattice)
+ 
+xyplot(steps ~ interval | level, Act.data2, type = "l", layout = c(1, 2), 
+    xlab = "Interval", ylab = "Steps")
+ 
+
+
+```
